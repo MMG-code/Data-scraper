@@ -16,6 +16,7 @@ from restaurant_scraper.models import Restaurant
 from restaurant_scraper.scrapers.google_places import GooglePlacesScraper
 from restaurant_scraper.scrapers.website_scraper import WebsiteScraper
 from restaurant_scraper.scrapers.yelp_scraper import YelpScraper
+from restaurant_scraper.scrapers.web_search import WebSearchScraper
 from restaurant_scraper.exporters.csv_exporter import export_to_csv
 from restaurant_scraper.exporters.hubspot_api import HubSpotExporter
 
@@ -44,9 +45,9 @@ def cli(verbose: bool) -> None:
 @click.option(
     "--source",
     "-s",
-    type=click.Choice(["google", "yelp", "both"]),
+    type=click.Choice(["google", "yelp", "web", "both"]),
     default="google",
-    help="Data source to search.",
+    help="Data source: google, yelp, web (no API key), or both (google+yelp).",
 )
 @click.option("--max-results", "-n", default=20, help="Max number of restaurants.")
 @click.option("--radius", "-r", default=5000, help="Search radius in meters (Google only).")
@@ -112,6 +113,13 @@ def scrape(
             yelp = YelpScraper()
             yelp_results = yelp.search_restaurants(location, max_results=max_results)
             restaurants.extend(yelp_results)
+            progress.update(task, completed=True)
+
+        if source == "web":
+            task = progress.add_task("Searching the web...", total=None)
+            web = WebSearchScraper()
+            web_results = web.search_restaurants(location, max_results=max_results)
+            restaurants.extend(web_results)
             progress.update(task, completed=True)
 
     if not restaurants:
@@ -210,6 +218,56 @@ def scrape(
                 console.print(f"  [red]•[/] {err}")
 
 
+@cli.command(name="from-json")
+@click.argument("json_file", type=click.Path(exists=True))
+@click.option(
+    "--output", "-o", default=None,
+    help="Output CSV file path.",
+)
+@click.option(
+    "--hubspot-format/--raw-format", default=True,
+    help="Use HubSpot-friendly CSV column names.",
+)
+@click.option("--hubspot-push", is_flag=True, help="Push results to HubSpot API.")
+def from_json(
+    json_file: str, output: str | None, hubspot_format: bool, hubspot_push: bool
+) -> None:
+    """Load restaurant data from a JSON file and export to CSV.
+
+    Example:
+
+        python -m restaurant_scraper from-json output/malahide_restaurants.json
+    """
+    from restaurant_scraper.scrapers.seed_data import load_from_json
+
+    restaurants = load_from_json(json_file)
+    if not restaurants:
+        console.print("[yellow]No restaurants found in JSON file.[/]")
+        return
+
+    console.print(f"Loaded [green]{len(restaurants)}[/] restaurants from {json_file}\n")
+    _display_results(restaurants)
+
+    if output is None:
+        from pathlib import Path
+        output = str(Path(json_file).with_suffix(".csv"))
+
+    csv_path = export_to_csv(restaurants, output, hubspot_format=hubspot_format)
+    console.print(f"\n[green]CSV exported to:[/] {csv_path}")
+
+    if hubspot_push:
+        hs_key = os.getenv("HUBSPOT_API_KEY")
+        if not hs_key:
+            console.print("[red]Error:[/] HUBSPOT_API_KEY not set.")
+            return
+        hs = HubSpotExporter(hs_key)
+        result = hs.push_restaurants(restaurants)
+        console.print(
+            f"\nHubSpot: [green]{result['created']} created[/], "
+            f"[red]{result['failed']} failed[/]"
+        )
+
+
 @cli.command()
 def check_config() -> None:
     """Check which API keys are configured."""
@@ -234,6 +292,7 @@ def check_config() -> None:
         table.add_row("HubSpot API", "[red]Not set[/]", "Set HUBSPOT_API_KEY in .env")
 
     table.add_row("Yelp Scraping", "[green]Available[/]", "No API key needed")
+    table.add_row("Web Search", "[green]Available[/]", "No API key needed (--source web)")
 
     console.print(table)
 
