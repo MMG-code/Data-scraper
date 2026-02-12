@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restaurant Data Scraper</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border-bottom: 1px solid #334155;
+            padding: 20px 0;
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #f97316, #ef4444);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .logo h1 {
+            font-size: 20px;
+            font-weight: 700;
+            color: #f8fafc;
+        }
+
+        .logo span {
+            font-size: 13px;
+            color: #94a3b8;
+            font-weight: 400;
+        }
+
+        .hubspot-badge {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-size: 13px;
+            color: #94a3b8;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .hubspot-badge .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #22c55e;
+        }
+
+        .main {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 32px 24px;
+        }
+
+        /* API Key Setup */
+        .api-setup {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .api-setup h3 {
+            font-size: 16px;
+            margin-bottom: 8px;
+            color: #f8fafc;
+        }
+
+        .api-setup p {
+            font-size: 14px;
+            color: #94a3b8;
+            margin-bottom: 16px;
+            line-height: 1.5;
+        }
+
+        .api-setup a {
+            color: #60a5fa;
+            text-decoration: none;
+        }
+
+        .api-setup a:hover {
+            text-decoration: underline;
+        }
+
+        .api-key-form {
+            display: flex;
+            gap: 12px;
+        }
+
+        .api-key-form input {
+            flex: 1;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 10px 16px;
+            color: #e2e8f0;
+            font-size: 14px;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+        }
+
+        .api-key-form input:focus {
+            outline: none;
+            border-color: #f97316;
+        }
+
+        /* Search Card */
+        .search-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .search-row {
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group.location {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .form-group label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .form-group input, .form-group select {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 12px 16px;
+            color: #e2e8f0;
+            font-size: 15px;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #f97316;
+            box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
+        }
+
+        .form-group select {
+            cursor: pointer;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 0;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #f97316;
+            cursor: pointer;
+        }
+
+        .checkbox-group label {
+            font-size: 14px;
+            color: #e2e8f0;
+            cursor: pointer;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #f97316, #ef4444);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: #334155;
+            color: #e2e8f0;
+            border: 1px solid #475569;
+        }
+
+        .btn-secondary:hover {
+            background: #475569;
+        }
+
+        .btn-success {
+            background: #22c55e;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #16a34a;
+        }
+
+        /* Progress */
+        .progress-section {
+            display: none;
+            margin-bottom: 24px;
+        }
+
+        .progress-bar-container {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 24px;
+        }
+
+        .progress-status {
+            font-size: 15px;
+            color: #f8fafc;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid #334155;
+            border-top-color: #f97316;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #334155;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #f97316, #ef4444);
+            border-radius: 3px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .progress-fill.indeterminate {
+            width: 30%;
+            animation: indeterminate 1.5s ease-in-out infinite;
+        }
+
+        @keyframes indeterminate {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(400%); }
+        }
+
+        /* Stats Bar */
+        .stats-bar {
+            display: none;
+            gap: 16px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .stat-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 10px;
+            padding: 16px 20px;
+            flex: 1;
+            min-width: 140px;
+        }
+
+        .stat-card .value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #f8fafc;
+        }
+
+        .stat-card .label {
+            font-size: 13px;
+            color: #94a3b8;
+            margin-top: 4px;
+        }
+
+        /* Action Bar */
+        .action-bar {
+            display: none;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .action-bar .title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        /* Results Table */
+        .results-section {
+            display: none;
+        }
+
+        .table-container {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .table-scroll {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        thead {
+            background: #0f172a;
+        }
+
+        th {
+            padding: 14px 16px;
+            text-align: left;
+            font-weight: 600;
+            color: #94a3b8;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            white-space: nowrap;
+            border-bottom: 1px solid #334155;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        th:hover {
+            color: #e2e8f0;
+        }
+
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+            color: #cbd5e1;
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        tr:hover td {
+            background: rgba(249, 115, 22, 0.05);
+        }
+
+        td a {
+            color: #60a5fa;
+            text-decoration: none;
+        }
+
+        td a:hover {
+            text-decoration: underline;
+        }
+
+        .venue-name {
+            font-weight: 600;
+            color: #f8fafc;
+        }
+
+        .rating {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            color: #fbbf24;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .tag-price {
+            background: rgba(34, 197, 94, 0.15);
+            color: #4ade80;
+        }
+
+        /* Error / Empty */
+        .error-msg {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 8px;
+            padding: 16px;
+            color: #fca5a5;
+            margin-bottom: 16px;
+            display: none;
+        }
+
+        /* Quick Location Buttons */
+        .quick-locations {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+
+        .quick-loc {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            background: #0f172a;
+            border: 1px solid #334155;
+            color: #94a3b8;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .quick-loc:hover {
+            border-color: #f97316;
+            color: #f97316;
+        }
+
+        /* Expand Row */
+        .expand-row {
+            display: none;
+        }
+
+        .expand-row td {
+            padding: 16px 20px;
+            background: #0f172a;
+            max-width: none;
+            white-space: normal;
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 12px;
+        }
+
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .detail-item .dlabel {
+            font-size: 11px;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .detail-item .dvalue {
+            font-size: 14px;
+            color: #e2e8f0;
+            word-break: break-all;
+        }
+
+        .social-links {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .social-link {
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            background: #1e293b;
+            border: 1px solid #334155;
+            color: #60a5fa;
+            text-decoration: none;
+        }
+
+        .social-link:hover {
+            border-color: #60a5fa;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header-content { flex-direction: column; gap: 12px; }
+            .search-row { flex-direction: column; }
+            .form-group.location { min-width: auto; }
+            .stats-bar { flex-direction: column; }
+            .action-bar { flex-direction: column; align-items: stretch; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon">&#127860;</div>
+                <div>
+                    <h1>Restaurant Data Scraper</h1>
+                    <span>Powered by Google Places API</span>
+                </div>
+            </div>
+            <div class="hubspot-badge">
+                <div class="dot"></div>
+                HubSpot-Ready Export
+            </div>
+        </div>
+    </div>
+
+    <div class="main">
+        {% if not has_api_key %}
+        <div class="api-setup" id="apiSetup">
+            <h3>Google Places API Key Required</h3>
+            <p>
+                To search for restaurants, you need a Google Places API key.
+                Get one free from the
+                <a href="https://console.cloud.google.com/apis/credentials" target="_blank">Google Cloud Console</a>
+                &mdash; enable the <strong>Places API</strong> under APIs & Services.
+            </p>
+            <div class="api-key-form">
+                <input type="text" id="apiKeyInput" placeholder="Paste your Google Places API key here...">
+                <button class="btn btn-primary" onclick="saveApiKey()">Save Key</button>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="search-card">
+            <div class="search-row">
+                <div class="form-group location">
+                    <label>Location</label>
+                    <input type="text" id="locationInput" placeholder="e.g. Malahide, Dublin"
+                           onkeydown="if(event.key==='Enter') runSearch()">
+                </div>
+                <div class="form-group">
+                    <label>Max Results</label>
+                    <select id="maxResults">
+                        <option value="10">10</option>
+                        <option value="20" selected>20</option>
+                        <option value="40">40</option>
+                        <option value="60">60</option>
+                    </select>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="enrichCheckbox" checked>
+                    <label for="enrichCheckbox">Deep scan websites</label>
+                </div>
+                <button class="btn btn-primary" id="searchBtn" onclick="runSearch()">
+                    Search Restaurants
+                </button>
+            </div>
+            <div class="quick-locations">
+                <span style="font-size:13px;color:#64748b;padding:6px 0;">Quick:</span>
+                <button class="quick-loc" onclick="quickSearch('Malahide, Dublin')">Malahide</button>
+                <button class="quick-loc" onclick="quickSearch('Dublin City Centre')">Dublin City</button>
+                <button class="quick-loc" onclick="quickSearch('Cork City, Ireland')">Cork</button>
+                <button class="quick-loc" onclick="quickSearch('Galway City, Ireland')">Galway</button>
+                <button class="quick-loc" onclick="quickSearch('Limerick, Ireland')">Limerick</button>
+                <button class="quick-loc" onclick="quickSearch('Killarney, Kerry, Ireland')">Killarney</button>
+                <button class="quick-loc" onclick="quickSearch('Kinsale, Cork, Ireland')">Kinsale</button>
+                <button class="quick-loc" onclick="quickSearch('Dingle, Kerry, Ireland')">Dingle</button>
+            </div>
+        </div>
+
+        <div class="error-msg" id="errorMsg"></div>
+
+        <div class="progress-section" id="progressSection">
+            <div class="progress-bar-container">
+                <div class="progress-status">
+                    <div class="spinner"></div>
+                    <span id="progressText">Searching Google Places...</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill indeterminate" id="progressFill"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="stats-bar" id="statsBar">
+            <div class="stat-card">
+                <div class="value" id="statTotal">0</div>
+                <div class="label">Restaurants Found</div>
+            </div>
+            <div class="stat-card">
+                <div class="value" id="statEmails">0</div>
+                <div class="label">Emails Found</div>
+            </div>
+            <div class="stat-card">
+                <div class="value" id="statPhones">0</div>
+                <div class="label">Phone Numbers</div>
+            </div>
+            <div class="stat-card">
+                <div class="value" id="statOwners">0</div>
+                <div class="label">Owners Identified</div>
+            </div>
+            <div class="stat-card">
+                <div class="value" id="statSocials">0</div>
+                <div class="label">Social Profiles</div>
+            </div>
+        </div>
+
+        <div class="action-bar" id="actionBar">
+            <div class="title" id="resultsTitle">Results</div>
+            <div class="action-buttons">
+                <button class="btn btn-success" onclick="downloadCSV()">
+                    &#11015; Download HubSpot CSV
+                </button>
+                <button class="btn btn-secondary" onclick="copyEmails()">
+                    Copy All Emails
+                </button>
+                <button class="btn btn-secondary" onclick="copyPhones()">
+                    Copy All Phones
+                </button>
+            </div>
+        </div>
+
+        <div class="results-section" id="resultsSection">
+            <div class="table-container">
+                <div class="table-scroll">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th onclick="sortTable('venue_name')">Name</th>
+                                <th onclick="sortTable('phone_number')">Phone</th>
+                                <th onclick="sortTable('email_address')">Email</th>
+                                <th onclick="sortTable('website')">Website</th>
+                                <th onclick="sortTable('venue_owner')">Owner</th>
+                                <th onclick="sortTable('rating')">Rating</th>
+                                <th>Socials</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultsBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+let allResults = [];
+let sortField = '';
+let sortAsc = true;
+
+function quickSearch(location) {
+    document.getElementById('locationInput').value = location;
+    runSearch();
+}
+
+async function saveApiKey() {
+    const key = document.getElementById('apiKeyInput').value.trim();
+    if (!key) return;
+
+    const resp = await fetch('/api/save-key', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({api_key: key})
+    });
+
+    if (resp.ok) {
+        document.getElementById('apiSetup').style.display = 'none';
+    } else {
+        showError('Failed to save API key.');
+    }
+}
+
+async function runSearch() {
+    const location = document.getElementById('locationInput').value.trim();
+    if (!location) {
+        showError('Please enter a location.');
+        return;
+    }
+
+    const maxResults = document.getElementById('maxResults').value;
+    const enrich = document.getElementById('enrichCheckbox').checked;
+
+    // Show progress, hide results
+    hideError();
+    document.getElementById('progressSection').style.display = 'block';
+    document.getElementById('statsBar').style.display = 'none';
+    document.getElementById('actionBar').style.display = 'none';
+    document.getElementById('resultsSection').style.display = 'none';
+    document.getElementById('searchBtn').disabled = true;
+
+    document.getElementById('progressText').textContent =
+        enrich
+            ? 'Searching Google Places & scanning websites (this may take a minute)...'
+            : 'Searching Google Places...';
+
+    try {
+        const resp = await fetch('/api/search', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({location, max_results: maxResults, enrich})
+        });
+
+        const data = await resp.json();
+
+        if (!resp.ok) {
+            showError(data.error || 'Search failed.');
+            return;
+        }
+
+        allResults = data.restaurants;
+        renderResults();
+        updateStats();
+
+        document.getElementById('resultsTitle').textContent =
+            `${data.count} restaurants in ${location}`;
+
+        document.getElementById('statsBar').style.display = 'flex';
+        document.getElementById('actionBar').style.display = 'flex';
+        document.getElementById('resultsSection').style.display = 'block';
+
+    } catch (err) {
+        showError('Network error: ' + err.message);
+    } finally {
+        document.getElementById('progressSection').style.display = 'none';
+        document.getElementById('searchBtn').disabled = false;
+    }
+}
+
+function renderResults() {
+    const tbody = document.getElementById('resultsBody');
+    tbody.innerHTML = '';
+
+    allResults.forEach((r, i) => {
+        const socialsCount = [r.facebook, r.instagram, r.twitter, r.linkedin, r.tiktok]
+            .filter(s => s).length;
+
+        const socialIcons = [];
+        if (r.instagram) socialIcons.push(`<a href="${esc(r.instagram)}" target="_blank" title="Instagram">IG</a>`);
+        if (r.facebook) socialIcons.push(`<a href="${esc(r.facebook)}" target="_blank" title="Facebook">FB</a>`);
+        if (r.twitter) socialIcons.push(`<a href="${esc(r.twitter)}" target="_blank" title="X/Twitter">X</a>`);
+        if (r.linkedin) socialIcons.push(`<a href="${esc(r.linkedin)}" target="_blank" title="LinkedIn">LI</a>`);
+        if (r.tiktok) socialIcons.push(`<a href="${esc(r.tiktok)}" target="_blank" title="TikTok">TT</a>`);
+
+        const website = r.website ? r.website.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '') : '';
+        const websiteTrunc = website.length > 25 ? website.substring(0, 22) + '...' : website;
+
+        const row = document.createElement('tr');
+        row.style.cursor = 'pointer';
+        row.onclick = () => toggleExpand(i);
+        row.innerHTML = `
+            <td>${i + 1}</td>
+            <td class="venue-name">${esc(r.venue_name)}</td>
+            <td>${r.phone_number ? esc(r.phone_number) : '<span style="color:#475569">-</span>'}</td>
+            <td>${r.email_address ? `<a href="mailto:${esc(r.email_address)}">${esc(r.email_address)}</a>` : '<span style="color:#475569">-</span>'}</td>
+            <td>${r.website ? `<a href="${esc(r.website)}" target="_blank" onclick="event.stopPropagation()">${esc(websiteTrunc)}</a>` : '<span style="color:#475569">-</span>'}</td>
+            <td>${r.venue_owner ? esc(r.venue_owner) : '<span style="color:#475569">-</span>'}</td>
+            <td>${r.rating ? `<span class="rating">${r.rating}</span>` : '<span style="color:#475569">-</span>'}</td>
+            <td>${socialIcons.length ? socialIcons.join(' ') : '<span style="color:#475569">-</span>'}</td>
+            <td style="color:#475569;font-size:18px">&#9660;</td>
+        `;
+        tbody.appendChild(row);
+
+        // Expandable detail row
+        const expandRow = document.createElement('tr');
+        expandRow.className = 'expand-row';
+        expandRow.id = `expand-${i}`;
+        expandRow.innerHTML = `
+            <td colspan="9">
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <span class="dlabel">Full Address</span>
+                        <span class="dvalue">${esc(r.venue_address || '-')}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="dlabel">City</span>
+                        <span class="dvalue">${esc(r.city || '-')}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="dlabel">County / State</span>
+                        <span class="dvalue">${esc(r.state || '-')}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="dlabel">Eircode / Postal</span>
+                        <span class="dvalue">${esc(r.zip_code || '-')}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="dlabel">Country</span>
+                        <span class="dvalue">${esc(r.country || '-')}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="dlabel">Phone</span>
+                        <span class="dvalue">${r.phone_number ? `<a href="tel:${esc(r.phone_number)}">${esc(r.phone_number)}</a>` : '-'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="dlabel">Email</span>
+                        <span class="dvalue">${r.email_address ? `<a href="mailto:${esc(r.email_address)}">${esc(r.email_address)}</a>` : '-'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="dlabel">Website</span>
+                        <span class="dvalue">${r.website ? `<a href="${esc(r.website)}" target="_blank">${esc(r.website)}</a>` : '-'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="dlabel">Owner</span>
+                        <span class="dvalue">${esc(r.venue_owner || '-')}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="dlabel">Rating</span>
+                        <span class="dvalue">${r.rating || '-'} ${r.price_level ? '&middot; ' + esc(r.price_level) : ''}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="dlabel">Hours</span>
+                        <span class="dvalue">${esc(r.hours_of_operation || '-')}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="dlabel">Social Media</span>
+                        <span class="dvalue social-links">
+                            ${r.facebook ? `<a class="social-link" href="${esc(r.facebook)}" target="_blank">Facebook</a>` : ''}
+                            ${r.instagram ? `<a class="social-link" href="${esc(r.instagram)}" target="_blank">Instagram</a>` : ''}
+                            ${r.twitter ? `<a class="social-link" href="${esc(r.twitter)}" target="_blank">X / Twitter</a>` : ''}
+                            ${r.linkedin ? `<a class="social-link" href="${esc(r.linkedin)}" target="_blank">LinkedIn</a>` : ''}
+                            ${r.tiktok ? `<a class="social-link" href="${esc(r.tiktok)}" target="_blank">TikTok</a>` : ''}
+                            ${![r.facebook, r.instagram, r.twitter, r.linkedin, r.tiktok].some(s => s) ? '-' : ''}
+                        </span>
+                    </div>
+                </div>
+            </td>
+        `;
+        tbody.appendChild(expandRow);
+    });
+}
+
+function toggleExpand(i) {
+    const row = document.getElementById(`expand-${i}`);
+    row.style.display = row.style.display === 'table-row' ? 'none' : 'table-row';
+}
+
+function updateStats() {
+    const total = allResults.length;
+    const emails = allResults.filter(r => r.email_address).length;
+    const phones = allResults.filter(r => r.phone_number).length;
+    const owners = allResults.filter(r => r.venue_owner).length;
+    const socials = allResults.reduce((sum, r) =>
+        sum + [r.facebook, r.instagram, r.twitter, r.linkedin, r.tiktok].filter(s => s).length, 0
+    );
+
+    document.getElementById('statTotal').textContent = total;
+    document.getElementById('statEmails').textContent = emails;
+    document.getElementById('statPhones').textContent = phones;
+    document.getElementById('statOwners').textContent = owners;
+    document.getElementById('statSocials').textContent = socials;
+}
+
+function sortTable(field) {
+    if (sortField === field) {
+        sortAsc = !sortAsc;
+    } else {
+        sortField = field;
+        sortAsc = true;
+    }
+
+    allResults.sort((a, b) => {
+        let va = a[field] || '';
+        let vb = b[field] || '';
+        if (typeof va === 'number' && typeof vb === 'number') {
+            return sortAsc ? va - vb : vb - va;
+        }
+        va = String(va).toLowerCase();
+        vb = String(vb).toLowerCase();
+        return sortAsc ? va.localeCompare(vb) : vb.localeCompare(va);
+    });
+
+    renderResults();
+}
+
+function downloadCSV() {
+    window.location.href = '/api/download-csv';
+}
+
+function copyEmails() {
+    const emails = allResults.map(r => r.email_address).filter(e => e).join('\n');
+    navigator.clipboard.writeText(emails).then(() => {
+        alert(`Copied ${emails.split('\n').length} emails to clipboard!`);
+    });
+}
+
+function copyPhones() {
+    const phones = allResults.map(r => r.phone_number).filter(p => p).join('\n');
+    navigator.clipboard.writeText(phones).then(() => {
+        alert(`Copied ${phones.split('\n').length} phone numbers to clipboard!`);
+    });
+}
+
+function showError(msg) {
+    const el = document.getElementById('errorMsg');
+    el.textContent = msg;
+    el.style.display = 'block';
+}
+
+function hideError() {
+    document.getElementById('errorMsg').style.display = 'none';
+}
+
+function esc(str) {
+    if (!str) return '';
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+</script>
+</body>
+</html>
